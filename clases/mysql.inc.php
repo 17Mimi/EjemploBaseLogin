@@ -15,7 +15,7 @@ class mod_db
 		$sql_host = "localhost";
 		$sql_name = "company_info";
 		$sql_user = "root";	
-		$sql_pass = "demo";
+		$sql_pass = "";
 
 		$dsn = "mysql:host=$sql_host;dbname=$sql_name;charset=utf8mb4";
 		try {

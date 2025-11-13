@@ -5,7 +5,7 @@ $options = [
     'cost' => 13,
 ];
 
-$claveMagica = "12345678";
+$claveMagica = "17";
 
 //$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 echo password_hash($claveMagica, PASSWORD_BCRYPT, $options);

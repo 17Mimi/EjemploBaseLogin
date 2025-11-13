@@ -12,8 +12,8 @@ $sql_type = "1"; // 1 --> MySQL ; 2 --> MSSQL
 ##### Setting SQL Vars #####
 $sql_host = "localhost";
 $sql_name = "company_info";
-$sql_user = "root";	
-$sql_pass = "demo";
+$sql_user = "lab_2fa_user";	
+$sql_pass = "Lab2FA#Secure2025";
 
 ##### Setting Other Vars #####
 $per_page = "10";
