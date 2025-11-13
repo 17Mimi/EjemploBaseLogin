@@ -48,7 +48,12 @@ $menu08=" id=\"current\"";
 				
 
 	?>
-
+<!-- En alguna parte de tu panel -->
+<div style="margin: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+    <a href="../activar_2fa.php" style="color: #007bff; text-decoration: none; font-weight: bold;">
+        🔐 Configurar Autenticación de Dos Factores
+    </a>
+</div>
 
 <!-- wrap starts here -->	
 <div id="wrap">

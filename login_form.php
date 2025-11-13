@@ -65,6 +65,28 @@
     font-size: 15px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Sombra muy, muy sutil */
 }
+
+/* Estilo para el enlace de registro */
+.enlace-registro {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.enlace-registro a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 16px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.enlace-registro a:hover {
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+}
 </style>
 
 </head>
@@ -113,8 +135,17 @@
                     <td colspan="2" align="center">                     
                         <div align="center"><input name="Submit" type="submit" class="clear" value="Buscar" />
                         (*Dos clic o enter para entrar)</div>
+                    </td>
 	        </tr>
             
+            <!-- Enlace para registro -->
+            <tr>
+              <td colspan="2" align="center">
+                <div class="enlace-registro">
+                  <a href="FormularioRegistro.php">¿No tienes cuenta? Regístrate aquí</a>
+                </div>
+              </td>
+            </tr>
            
       <div id="error"><font color="#FF0000">
       <?php

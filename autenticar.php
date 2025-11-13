@@ -1,6 +1,7 @@
 <?php
 session_start();
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
+
 
 use Sonata\GoogleAuthenticator\GoogleAuthenticator;
 
@@ -12,8 +13,8 @@ if (!isset($_SESSION['usuario_pendiente_2fa'])) {
 
 // Crear conexión MySQLi directamente
 $servername = "localhost";
-$username = "lab_2fa_user";      
-$password = "Lab2FA#Secure2025";  
+$username = "root";
+$password = "";
 $dbname = "company_info";
 
 $mysqli = new mysqli($servername, $username, $password, $dbname);
