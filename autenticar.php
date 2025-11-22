@@ -1,87 +1,55 @@
 <?php
 session_start();
-require __DIR__ . '/vendor/autoload.php';
 
-
-use Sonata\GoogleAuthenticator\GoogleAuthenticator;
-
-// Verificar si el usuario está en proceso de login 2FA
+// Verificar que viene del proceso de login
 if (!isset($_SESSION['usuario_pendiente_2fa'])) {
     header("Location: login.php");
     exit();
 }
 
-// Crear conexión MySQLi directamente
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "company_info";
+// MOVER LOS IMPORTS AL INICIO
+require 'vendor/autoload.php';
+use Sonata\GoogleAuthenticator\GoogleAuthenticator;
 
-$mysqli = new mysqli($servername, $username, $password, $dbname);
-
-if ($mysqli->connect_error) {
-    die("Error de conexión: " . $mysqli->connect_error);
-}
-
-$usuario_id = $_SESSION['usuario_pendiente_2fa'];
-$usuario_nombre = $_SESSION['usuario_nombre'] ?? 'Usuario';
-
-// Obtener el secreto de la base de datos
-$sql = "SELECT secret_2fa FROM usuarios WHERE id = ?";
-$stmt = $mysqli->prepare($sql);
-
-if (!$stmt) {
-    die("Error preparando consulta: " . $mysqli->error);
-}
-
-$stmt->bind_param("i", $usuario_id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows != 1) {
-    // Error: usuario no encontrado
-    $stmt->close();
-    $mysqli->close();
-    $_SESSION["emsg"] = 1;
-    header("Location: login.php");
-    exit();
-}
-
-$usuario_data = $result->fetch_assoc();
-$secret = $usuario_data['secret_2fa'];
 $mensaje = "";
 
-// Procesar formulario de verificación 2FA
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $codigo = trim($_POST['codigo']);
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['codigo_2fa'])) {
     $g = new GoogleAuthenticator();
-
-    if ($g->checkCode($secret, $codigo)) {
-        // Código válido - acceso concedido
+    $codigo_ingresado = trim($_POST['codigo_2fa']);
+    $secret = $_SESSION['secret_2fa_pendiente'];
+    
+    // Verificar el código 2FA
+    if ($g->checkCode($secret, $codigo_ingresado)) {
+        // Código correcto, completar login
         $_SESSION['autenticado'] = "SI";
-        $_SESSION['Usuario'] = $usuario_nombre;
-        $_SESSION['usuario_id'] = $usuario_id;
-        $_SESSION['autenticado_2fa'] = true;
+        $_SESSION['usuario_id'] = $_SESSION['usuario_pendiente_2fa'];
+        $_SESSION['Usuario'] = $_SESSION['usuario_nombre_pendiente'];
         
-        // Limpiar sesión temporal de 2FA
+        // Limpiar variables temporales
         unset($_SESSION['usuario_pendiente_2fa']);
-        unset($_SESSION['usuario_nombre']);
+        unset($_SESSION['usuario_nombre_pendiente']);
+        unset($_SESSION['secret_2fa_pendiente']);
+        unset($_SESSION['intentos_2fa']);
         
-        // Cerrar conexión
-        $stmt->close();
-        $mysqli->close();
-        
-        // Redirigir al panel de control
         header("Location: formularios/PanelControl.php");
         exit();
     } else {
-        // Código incorrecto
-        $mensaje = "<div style='color: red; padding: 10px; border: 1px solid red; background: #fff0f0; margin: 10px 0;'>✗ Código incorrecto. Intenta nuevamente.</div>";
+        // Incrementar intentos fallidos
+        $_SESSION['intentos_2fa'] = ($_SESSION['intentos_2fa'] ?? 0) + 1;
+        $mensaje = "<div style='color: red; padding: 10px; border: 1px solid red; background: #fff0f0; margin: 10px 0;'>❌ Código 2FA incorrecto. Intenta nuevamente.</div>";
+        
+        // Si hay muchos intentos fallidos, redirigir al login
+        if ($_SESSION['intentos_2fa'] >= 3) {
+            unset($_SESSION['usuario_pendiente_2fa']);
+            unset($_SESSION['usuario_nombre_pendiente']);
+            unset($_SESSION['secret_2fa_pendiente']);
+            unset($_SESSION['intentos_2fa']);
+            $_SESSION["emsg"] = 1;
+            header("Location: login.php");
+            exit();
+        }
     }
 }
-
-// Cerrar statement
-$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -89,12 +57,8 @@ $stmt->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificación de Dos Factores</title>
-    
+    <title>Verificación 2FA</title>
     <link rel="stylesheet" href="Estilos/Techmania.css" type="text/css" />
-    <link rel="stylesheet" href="Estilos/general.css" type="text/css">
-    <link rel="stylesheet" href="css/cmxform.css" type="text/css" />
-    
     <style>
         .container {
             max-width: 400px;
@@ -102,115 +66,73 @@ $stmt->close();
             padding: 30px;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             text-align: center;
         }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        input[type="text"] {
-            width: 150px;
+        .input-2fa {
+            font-size: 18px;
             padding: 12px;
+            width: 200px;
+            text-align: center;
+            letter-spacing: 8px;
             border: 2px solid #ddd;
             border-radius: 5px;
-            font-size: 18px;
-            text-align: center;
-            letter-spacing: 5px;
-            font-weight: bold;
+            margin: 15px 0;
         }
-        
-        input[type="text"]:focus {
-            border-color: #007bff;
-            outline: none;
-        }
-        
-        button {
-            background-color: #007bff;
+        .btn-verificar {
+            background: #28a745;
             color: white;
             padding: 12px 30px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            width: 100%;
-            margin-top: 10px;
         }
-        
-        button:hover {
-            background-color: #0056b3;
+        .btn-verificar:hover {
+            background: #218838;
         }
-        
-        .user-info {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .instructions {
+        .info-box {
             background: #e7f3ff;
             padding: 15px;
             border-radius: 5px;
-            margin-bottom: 20px;
+            margin: 15px 0;
             text-align: left;
-            font-size: 14px;
         }
     </style>
 </head>
 <body>
 <div id="wrap">
-    <div id="headerlogin"></div>
+    <div id="header"></div>
     
     <div class="container">
-        <h2>🔐 Verificación de Dos Factores</h2>
-        
-        <div class="user-info">
-            <strong>Usuario:</strong> <?php echo htmlspecialchars($usuario_nombre); ?>
-        </div>
-        
-        <div class="instructions">
-            <strong>Instrucciones:</strong><br>
-            1. Abre la app <strong>Google Authenticator</strong><br>
-            2. Busca el código de 6 dígitos<br>
-            3. Ingresa el código a continuación
-        </div>
+        <h2>🔐 Verificación en Dos Pasos</h2>
+        <p>Por favor, ingresa el código de 6 dígitos de Google Authenticator</p>
         
         <?php echo $mensaje; ?>
         
-        <form method="POST">
-            <div class="form-group">
-                <label for="codigo">Código de Verificación:</label>
-                <input type="text" id="codigo" name="codigo" required 
-                       maxlength="6" pattern="[0-9]{6}" 
-                       placeholder="123456" 
-                       title="Ingresa los 6 dígitos de Google Authenticator"
-                       autocomplete="off"
-                       autofocus>
-            </div>
-            
-            <button type="submit">✅ Verificar y Acceder</button>
-        </form>
-        
-        <div style="margin-top: 20px; font-size: 12px; color: #666;">
-            <p>¿Problemas con el código?</p>
-            <ul style="text-align: left; display: inline-block;">
-                <li>Asegúrate de que la hora de tu dispositivo esté sincronizada</li>
-                <li>El código expira cada 30 segundos</li>
-                <li>Si persisten los problemas, contacta al administrador</li>
-            </ul>
+        <div class="info-box">
+            <strong>📱 Instrucciones:</strong><br>
+            1. Abre Google Authenticator en tu dispositivo<br>
+            2. Encuentra el código de 6 dígitos para <strong><?php echo $_SESSION['usuario_nombre_pendiente']; ?></strong><br>
+            3. Ingresa el código a continuación
         </div>
         
+        <form method="POST">
+            <input type="text" 
+                   name="codigo_2fa" 
+                   class="input-2fa" 
+                   placeholder="000000" 
+                   maxlength="6" 
+                   pattern="[0-9]{6}" 
+                   required
+                   autocomplete="off"
+                   autofocus>
+            <br>
+            <button type="submit" class="btn-verificar">✅ Verificar Código</button>
+        </form>
+        
         <div style="margin-top: 20px;">
-            <a href="login.php" style="color: #007bff; text-decoration: none;">← Volver al Login</a>
+            <a href="login.php" style="color: #6c757d; text-decoration: none;">← Volver al Login</a>
         </div>
     </div>
     
@@ -218,22 +140,16 @@ $stmt->close();
 </div>
 
 <script>
-// Auto-enfocar el campo de código y permitir solo números
-document.getElementById('codigo').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-
-// Auto-submit cuando se ingresen 6 dígitos
-document.getElementById('codigo').addEventListener('input', function(e) {
-    if (this.value.length === 6) {
-        this.form.submit();
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.querySelector('input[name="codigo_2fa"]');
+    input.focus();
+    
+    input.addEventListener('input', function() {
+        if (this.value.length === 6) {
+            this.form.submit();
+        }
+    });
 });
 </script>
 </body>
 </html>
-
-<?php
-// Cerrar conexión al final
-$mysqli->close();
-?>

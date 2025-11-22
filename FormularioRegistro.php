@@ -1,34 +1,41 @@
+<?php
+session_start();
+$error = $_SESSION['error'] ?? '';
+unset($_SESSION['error']);
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario de Registro</title>
+    <title>Registro de Usuario</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        .container {
             max-width: 500px;
             margin: 50px auto;
             padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .form-container {
             background: white;
-            padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        .error {
+            color: red;
+            background: #ffe6e6;
+            padding: 10px;
+            border: 1px solid red;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
+        input, select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -36,76 +43,75 @@
             box-sizing: border-box;
         }
         button {
-            background-color: #007bff;
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
             color: white;
-            padding: 12px 30px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
         }
         button:hover {
-            background-color: #0056b3;
-        }
-        .message {
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <h2>Formulario de Registro</h2>
+    <div class="container">
+        <h2>Registro de Usuario</h2>
         
-        <?php
-        // Mostrar mensajes de éxito o error
-        if (isset($_GET['success']) && $_GET['success'] == 1) {
-            echo '<div class="message success">¡Registro exitoso!</div>';
-        }
-        if (isset($_GET['error'])) {
-            echo '<div class="message error">Error: ' . htmlspecialchars($_GET['error']) . '</div>';
-        }
-        ?>
+        <?php if (!empty($error)): ?>
+            <div class="error"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
         
-        <form action="ProcesarRegistro.php" method="POST">
+        <!-- ✅ CORRECCIÓN: action va a ProcesarRegistro.php -->
+        <form method="POST" action="ProcesarRegistro.php">
             <div class="form-group">
                 <label for="nombre">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" required>
+                <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($_POST['nombre'] ?? ''); ?>" required>
             </div>
             
             <div class="form-group">
                 <label for="apellido">Apellido:</label>
-                <input type="text" id="apellido" name="apellido" required>
+                <input type="text" id="apellido" name="apellido" value="<?php echo htmlspecialchars($_POST['apellido'] ?? ''); ?>" required>
             </div>
             
             <div class="form-group">
                 <label for="usuario">Nombre de Usuario:</label>
-                <input type="text" id="usuario" name="usuario" required>
+                <input type="text" id="usuario" name="usuario" value="<?php echo htmlspecialchars($_POST['usuario'] ?? ''); ?>" required>
+                <small>Mínimo 4 caracteres</small>
             </div>
             
             <div class="form-group">
                 <label for="correo">Correo Electrónico:</label>
-                <input type="email" id="correo" name="correo" required>
+                <input type="email" id="correo" name="correo" value="<?php echo htmlspecialchars($_POST['correo'] ?? ''); ?>" required>
             </div>
             
             <div class="form-group">
                 <label for="contraseña">Contraseña:</label>
                 <input type="password" id="contraseña" name="contraseña" required>
+                <small>Mínimo 6 caracteres</small>
             </div>
+            
+            <!-- ✅ COMENTADO: Campo sexo opcional -->
+            <!-- 
+            <div class="form-group">
+                <label for="sexo">Sexo:</label>
+                <select id="sexo" name="sexo">
+                    <option value="">Seleccione...</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                </select>
+            </div>
+            -->
             
             <button type="submit">Registrarse</button>
         </form>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="login.php">¿Ya tienes cuenta? Inicia sesión</a>
+        </div>
     </div>
 </body>
 </html>
